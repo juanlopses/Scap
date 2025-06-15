@@ -1,0 +1,16 @@
+{
+  "name": "anilist-scraper",
+  "version": "1.1.0",
+  "description": "Scraper para personajes de AniList usando Axios con rotación de proxies y concurrencia.",
+  "main": "scraper.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node scraper.mjs"
+  },
+  "author": "TuNombre",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "*",
+    "https-proxy-agent": "*"
+  }
+}
