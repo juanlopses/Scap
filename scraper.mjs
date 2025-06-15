@@ -40,6 +40,32 @@ async function validarProxies() {
   if (proxies.length === 0) throw new Error("🚫 No hay proxies válidos.")
 }
 
+async function validarProxiesFinal() {
+  console.log("🔄 Verificando proxies activos antes de terminar...")
+  const activos = []
+  for (let proxy of proxies) {
+    try {
+      const agent = new HttpsProxyAgent(proxy)
+      const res = await axios.get('https://api.ipify.org?format=json', {
+        httpsAgent: agent,
+        timeout: 5000
+      })
+      if (res.data?.ip) {
+        activos.push(proxy)
+        console.log(`✅ Proxy sigue activo: ${proxy} (${res.data.ip})`)
+      }
+    } catch {
+      console.log(`❌ Proxy ya no responde: ${proxy}`)
+    }
+  }
+  proxies = activos
+  if (proxies.length === 0) {
+    console.log("⚠️ No quedan proxies activos al finalizar.")
+  } else {
+    console.log(`✅ ${proxies.length} proxies activos al finalizar.`)
+  }
+}
+
 function getRandomProxy() {
   if (proxies.length === 0) throw new Error("No proxies disponibles")
   const index = Math.floor(Math.random() * proxies.length)
@@ -174,6 +200,7 @@ async function iniciarScraping() {
     await fs.access("./personajes")
   } catch {
     await fs.mkdir("personajes")
+    console.log("📁 Carpeta 'personajes' creada automáticamente.")
   }
 
   await cargarProgreso()
@@ -196,15 +223,21 @@ async function iniciarScraping() {
     await sleep(1000 + Math.random() * 500)
   }
 
+  // Esperar a que terminen las tareas pendientes
   while (enProceso.size > 0) {
     await sleep(500)
   }
-
-  console.log("🎉 Scraping finalizado.")
 }
 
 // === INICIO ===
 
-await cargarProxies()
-await validarProxies()
-await iniciarScraping()
+try {
+  await cargarProxies()
+  await validarProxies()
+  await iniciarScraping()
+  await validarProxiesFinal()
+  console.log("🎉 Scraping finalizado.")
+} catch (err) {
+  console.error('🚨 Error crítico:', err)
+  process.exit(1)
+}
