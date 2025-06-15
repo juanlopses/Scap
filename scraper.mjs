@@ -7,16 +7,27 @@ const MAX_ID = 999999
 const START_ID = 28824
 let proxies = []
 
-// === CARGA Y VALIDACIÓN DE PROXIES ===
+// === DESCARGA PROXIES DE LA API ===
 
-async function cargarProxies() {
-  const contenido = await fs.readFile('proxies.txt', 'utf8')
-  proxies = contenido
-    .split('\n')
-    .map(p => p.trim())
-    .filter(p => p.length > 0 && !p.startsWith('#'))
-  console.log(`🔌 ${proxies.length} proxies cargados.`)
+async function descargarProxies() {
+  console.log('⬇️ Descargando proxies de ProxyScrape...')
+  try {
+    const res = await axios.get(
+      'https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=protocolipport&format=text',
+      { timeout: 10000 }
+    )
+    const lista = res.data
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.startsWith('http') || l.startsWith('https'))
+    proxies = lista
+    console.log(`🔌 ${proxies.length} proxies descargados.`)
+  } catch (err) {
+    throw new Error('❌ Error descargando proxies: ' + err.message)
+  }
 }
+
+// === VALIDACIÓN DE PROXIES ===
 
 async function validarProxies() {
   console.log(`🧪 Validando proxies...`)
@@ -232,7 +243,7 @@ async function iniciarScraping() {
 // === INICIO ===
 
 try {
-  await cargarProxies()
+  await descargarProxies()
   await validarProxies()
   await iniciarScraping()
   await validarProxiesFinal()
